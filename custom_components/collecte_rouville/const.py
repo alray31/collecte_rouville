@@ -53,7 +53,7 @@ VILLES_LIST = list(VILLES.keys())
 
 COLLECTE_TYPES: dict[str, dict] = {
     "volumineux": {
-        "name": "Collecte volumineux sur inscription",
+        "name": "Volumineux (sur inscription)",
         "icon": "mdi:sofa",
         "binary_message": "Sortir les volumineux maintenant",
         "binary_sensor_type": "sortir",
@@ -69,7 +69,7 @@ COLLECTE_TYPES: dict[str, dict] = {
         "keywords": ["journaux", "revues et magazines", "journaux, revues"],
     },
     "ordures": {
-        "name": "Ordures Ménagères Résiduelles",
+        "name": "Ordures",
         "icon": "mdi:trash-can",
         "binary_message": "Sortir les ordures ménagères maintenant",
         "binary_sensor_type": "sortir",
@@ -77,7 +77,7 @@ COLLECTE_TYPES: dict[str, dict] = {
         "keywords": ["ordures ménagères résiduelles", "ordures ménagères", "ordures"],
     },
     "pellicules_agricoles": {
-        "name": "Collecte de pellicules agricoles",
+        "name": "Pellicules agricoles",
         "icon": "mdi:barley",
         "binary_message": "Sortir les pellicules agricoles maintenant",
         "binary_sensor_type": "sortir",
@@ -85,7 +85,7 @@ COLLECTE_TYPES: dict[str, dict] = {
         "keywords": ["biodéchets et déchets organiques", "biodéchets", "déchets organiques"],
     },
     "residus_verts": {
-        "name": "Collecte résidus verts",
+        "name": "Résidus verts",
         "icon": "mdi:grass",
         "binary_message": "Sortir les résidus verts maintenant",
         "binary_sensor_type": "sortir",
@@ -93,15 +93,15 @@ COLLECTE_TYPES: dict[str, dict] = {
         "keywords": ["déchets végétaux", "déchets végétal"],
     },
     "compost_alimentaire": {
-        "name": "Collecte compost / déchets alimentaires",
+        "name": "Compost / Résidus alimentaires",
         "icon": "mdi:compost",
-        "binary_message": "Sortir le compost et déchets alimentaires maintenant",
+        "binary_message": "Sortir le compost / résidus alimentaires maintenant",
         "binary_sensor_type": "sortir",
         # Correspond à : (Déchets alimentaires)
         "keywords": ["déchets alimentaires"],
     },
     "branches": {
-        "name": "Collecte de branches sur inscription",
+        "name": "Branches (sur inscription)",
         "icon": "mdi:tree",
         "binary_message": "Sortir les branches maintenant",
         "binary_sensor_type": "sortir",
