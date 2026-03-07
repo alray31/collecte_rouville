@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Collecte MRC de Rouville",
+        "description": "Choisissez votre ville. L'URL du calendrier sera configurée automatiquement.",
+        "data": {
+          "ville": "Votre ville"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter au calendrier Publidata. Vérifiez votre connexion internet.",
+      "invalid_ics": "Le fichier retourné n'est pas un calendrier ICS valide.",
+      "empty_calendar": "Le calendrier ne contient aucun événement futur.",
+      "unknown": "Erreur inconnue — consultez les journaux Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Cette ville est déjà configurée."
+    }
+  }
+}

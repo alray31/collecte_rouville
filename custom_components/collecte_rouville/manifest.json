@@ -1,0 +1,12 @@
+{
+  "domain": "collecte_rouville",
+  "name": "Collecte MRC de Rouville",
+  "version": "2.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/ton-utilisateur/collecte_rouville",
+  "issue_tracker": "https://github.com/ton-utilisateur/collecte_rouville/issues",
+  "codeowners": ["@ton-utilisateur"],
+  "requirements": ["icalendar>=5.0.0"],
+  "iot_class": "cloud_polling",
+  "hacs": "1.0.0"
+}
