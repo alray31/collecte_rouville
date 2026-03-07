@@ -4,13 +4,16 @@
 [hacs_shield]: https://img.shields.io/static/v1.svg?label=HACS&message=Default&style=popout&color=green&labelColor=41bdf5&logo=HomeAssistantCommunityStore&logoColor=white
 [hacs]: https://hacs.xyz/docs/default_repositories
 
-[latest_release]: https://github.com/kongo09/philips-airpurifier-coap/releases/latest
+[latest_release]: https://github.com/alray31/collecte_rouville/releases/latest
 [releases_shield]: https://img.shields.io/github/release/alray31/collecte_rouville
 
 
 # 🗑️ Collecte MRC de Rouville — Intégration HACS Home Assistant
 
 🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
+
+<img width="480" height="480" alt="image" src="https://github.com/user-attachments/assets/ca0dd53e-06a3-4fa9-ba99-162ad82b7471" />
+
 
 [![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
 
