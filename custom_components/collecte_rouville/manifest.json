@@ -1,7 +1,7 @@
 {
   "domain": "collecte_rouville",
   "name": "Collecte MRC de Rouville",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "config_flow": true,
   "documentation": "https://github.com/alray31/collecte_rouville",
   "issue_tracker": "https://github.com/alray31/collecte_rouville/issues",
