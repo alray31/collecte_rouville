@@ -4,6 +4,8 @@
 🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
 
 
+[![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
+
 ## Villes supportées
 - St-Césaire
 - St-Mathias-sur-Richelieu
@@ -63,7 +65,9 @@ Chaque type de collecte dispose d'un binary sensor qui devient **ON** 12 heures 
 ### Via HACS
 1. HACS → Intégrations → ⋮ → Dépôts personnalisés
 2. Ajouter l'URL du dépôt GitHub, catégorie **Integration**
-3. Installer et redémarrer HA
+[![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
+3. Installer l'intégration Collecte Rouveille dans HACS et redémarrer HA
+4. Ajouter l'intégration Collecte Rouville dans Paramètres/Appareils et Services/+ ajouter une intégration
 
 ---
 
@@ -117,3 +121,7 @@ Pour toute question, problème ou suggestion concernant **cette intégration**, 
 👉 **[Ouvrir un ticket (GitHub Issues)](https://github.com/alray31/collecte_rouville/issues)**
 
 Veuillez **ne pas contacter la MRC de Rouville ni ses municipalités** pour obtenir du support relatif à cette intégration.
+
+## 📄 Licence
+
+Ce projet est distribué sous licence **MIT**. Voir le fichier [`LICENSE`](LICENSE) pour les détails.
