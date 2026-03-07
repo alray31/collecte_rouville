@@ -1,5 +1,7 @@
+
+
 # collecte_rouville
-🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville (Publidata ICS) — capteurs de dates et alertes automatiques.
+🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
 
 
 ## Villes supportées
@@ -104,3 +106,14 @@ entities:
     name: "Prochaine date déchets végétaux"
 ```
 
+## ⚠️ Avis de non-affiliation
+
+Cette intégration est un projet communautaire indépendant et n'est **ni développée, ni approuvée, ni affiliée à la MRC de Rouville, à ses municipalités membres, ni à Publidata**.
+
+Les données de collecte proviennent des calendriers ICS publics mis à disposition par Publidata pour le compte des municipalités. L'exactitude et la disponibilité de ces données relèvent entièrement de ces organismes.
+
+Pour toute question, problème ou suggestion concernant **cette intégration**, veuillez ouvrir un ticket via le système de suivi GitHub :
+
+👉 **[Ouvrir un ticket (GitHub Issues)](https://github.com/alray31/collecte_rouville/issues)**
+
+Veuillez **ne pas contacter la MRC de Rouville ni ses municipalités** pour obtenir du support relatif à cette intégration.
