@@ -5,8 +5,13 @@ CONF_ICS_URL = "ics_url"
 CONF_VILLE = "ville"
 SCAN_INTERVAL_HOURS = 12
 
-# Heures avant l'événement pour activer le binary sensor
+# Heures avant l'événement pour activer le binary sensor "sortir les bacs"
 BINARY_SENSOR_HOURS_BEFORE = 12
+
+# Fenêtre d'inscription pour les collectes sur inscription (en jours)
+# Actif de INSCRIPTION_JOURS_AVANT_DEBUT à INSCRIPTION_JOURS_AVANT_FIN jours avant la collecte
+INSCRIPTION_JOURS_AVANT_DEBUT = 21  # s'active 21 jours avant
+INSCRIPTION_JOURS_AVANT_FIN = 8     # se désactive 8 jours avant
 
 # ─── Villes disponibles et leurs URLs ICS ────────────────────────────────────
 VILLES: dict[str, dict] = {
@@ -41,24 +46,25 @@ VILLES_LIST = list(VILLES.keys())
 # ─── Types de collecte ────────────────────────────────────────────────────────
 # Les mots-clés correspondent aux noms EXACTS utilisés dans les SUMMARY Publidata
 # Format ICS : "Collecte en porte à porte (Nom du type)"
-# La recherche se fait en lowercase sur le texte complet du SUMMARY + DESCRIPTION.
 #
-# NOTE: Publidata regroupe Journaux + Revues dans un seul événement :
-#   "Collecte en porte à porte (Journaux, Revues et Magazines)"
-#   → un seul capteur "journaux_revues" couvre les deux.
+# binary_sensor_type :
+#   "sortir"       → actif 12h avant minuit du jour J (toute la journée)
+#   "inscription"  → actif de J-21 à J-8 (fenêtre pour s'inscrire)
 
 COLLECTE_TYPES: dict[str, dict] = {
-    "encombrants": {
-        "name": "Encombrants",
-        "icon": "mdi:dump-truck",
-        "binary_message": "Sortir les encombrants maintenant",
+    "volumineux": {
+        "name": "Collecte volumineux sur inscription",
+        "icon": "mdi:sofa",
+        "binary_message": "Sortir les volumineux maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Encombrants)
         "keywords": ["encombrants", "encombrant"],
     },
-    "journaux_revues": {
-        "name": "Journaux, Revues et Magazines",
-        "icon": "mdi:newspaper",
-        "binary_message": "Sortir les journaux et magazines maintenant",
+    "recuperation": {
+        "name": "Récupération",
+        "icon": "mdi:recycle",
+        "binary_message": "Sortir la récupération maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Journaux, Revues et Magazines)
         "keywords": ["journaux", "revues et magazines", "journaux, revues"],
     },
@@ -66,35 +72,44 @@ COLLECTE_TYPES: dict[str, dict] = {
         "name": "Ordures Ménagères Résiduelles",
         "icon": "mdi:trash-can",
         "binary_message": "Sortir les ordures ménagères maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Ordures Ménagères Résiduelles)
         "keywords": ["ordures ménagères résiduelles", "ordures ménagères", "ordures"],
     },
-    "biochets_organiques": {
-        "name": "Biodéchets et Déchets Organiques",
-        "icon": "mdi:leaf",
-        "binary_message": "Sortir les biodéchets et déchets organiques maintenant",
+    "pellicules_agricoles": {
+        "name": "Collecte de pellicules agricoles",
+        "icon": "mdi:barley",
+        "binary_message": "Sortir les pellicules agricoles maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Biodéchets et Déchets organiques)
         "keywords": ["biodéchets et déchets organiques", "biodéchets", "déchets organiques"],
     },
-    "dechets_vegetaux": {
-        "name": "Déchets Végétaux",
-        "icon": "mdi:tree",
-        "binary_message": "Sortir les déchets végétaux maintenant",
+    "residus_verts": {
+        "name": "Collecte résidus verts",
+        "icon": "mdi:grass",
+        "binary_message": "Sortir les résidus verts maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Déchets Végétaux)
         "keywords": ["déchets végétaux", "déchets végétal"],
     },
-    "dechets_alimentaires": {
-        "name": "Déchets Alimentaires",
-        "icon": "mdi:food-apple",
-        "binary_message": "Sortir les déchets alimentaires maintenant",
+    "compost_alimentaire": {
+        "name": "Collecte compost / déchets alimentaires",
+        "icon": "mdi:compost",
+        "binary_message": "Sortir le compost et déchets alimentaires maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Déchets alimentaires)
         "keywords": ["déchets alimentaires"],
     },
-    "bois": {
-        "name": "Bois",
-        "icon": "mdi:forest",
-        "binary_message": "Sortir le bois maintenant",
+    "branches": {
+        "name": "Collecte de branches sur inscription",
+        "icon": "mdi:tree",
+        "binary_message": "Sortir les branches maintenant",
+        "binary_sensor_type": "sortir",
         # Correspond à : (Bois)
         "keywords": ["(bois)"],
     },
 }
+
+# Types de collecte qui ont un binary sensor d'inscription (J-21 à J-8)
+# en PLUS du binary sensor "sortir" standard
+COLLECTE_INSCRIPTION: list[str] = ["volumineux", "branches"]
