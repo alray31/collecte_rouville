@@ -39,75 +39,62 @@ VILLES: dict[str, dict] = {
 VILLES_LIST = list(VILLES.keys())
 
 # ─── Types de collecte ────────────────────────────────────────────────────────
-# Clé interne → { name, keywords, icon, binary_sensor_message }
+# Les mots-clés correspondent aux noms EXACTS utilisés dans les SUMMARY Publidata
+# Format ICS : "Collecte en porte à porte (Nom du type)"
+# La recherche se fait en lowercase sur le texte complet du SUMMARY + DESCRIPTION.
+#
+# NOTE: Publidata regroupe Journaux + Revues dans un seul événement :
+#   "Collecte en porte à porte (Journaux, Revues et Magazines)"
+#   → un seul capteur "journaux_revues" couvre les deux.
+
 COLLECTE_TYPES: dict[str, dict] = {
     "encombrants": {
         "name": "Encombrants",
         "icon": "mdi:dump-truck",
         "binary_message": "Sortir les encombrants maintenant",
-        "keywords": [
-            "encombrant", "résidus domestiques dangereux", "rdd",
-            "volumineux", "hors normes", "collecte spéciale",
-        ],
+        # Correspond à : (Encombrants)
+        "keywords": ["encombrants", "encombrant"],
     },
-    "journaux": {
-        "name": "Journaux",
+    "journaux_revues": {
+        "name": "Journaux, Revues et Magazines",
         "icon": "mdi:newspaper",
-        "binary_message": "Sortir les journaux maintenant",
-        "keywords": [
-            "journal", "journaux",
-        ],
-    },
-    "revues": {
-        "name": "Revues et Magazines",
-        "icon": "mdi:book-open-page-variant",
-        "binary_message": "Sortir les revues et magazines maintenant",
-        "keywords": [
-            "revue", "magazine", "périodique",
-        ],
+        "binary_message": "Sortir les journaux et magazines maintenant",
+        # Correspond à : (Journaux, Revues et Magazines)
+        "keywords": ["journaux", "revues et magazines", "journaux, revues"],
     },
     "ordures": {
         "name": "Ordures Ménagères Résiduelles",
         "icon": "mdi:trash-can",
         "binary_message": "Sortir les ordures ménagères maintenant",
-        "keywords": [
-            "ordure", "ménagère", "résiduelle", "bac noir", "poubelle",
-            "déchets résiduels", "ordures ménagères",
-        ],
+        # Correspond à : (Ordures Ménagères Résiduelles)
+        "keywords": ["ordures ménagères résiduelles", "ordures ménagères", "ordures"],
     },
     "biochets_organiques": {
         "name": "Biodéchets et Déchets Organiques",
         "icon": "mdi:leaf",
         "binary_message": "Sortir les biodéchets et déchets organiques maintenant",
-        "keywords": [
-            "biodéchet", "organique", "bac brun", "matières organiques",
-            "compost", "résidus organiques",
-        ],
+        # Correspond à : (Biodéchets et Déchets organiques)
+        "keywords": ["biodéchets et déchets organiques", "biodéchets", "déchets organiques"],
     },
     "dechets_vegetaux": {
         "name": "Déchets Végétaux",
         "icon": "mdi:tree",
         "binary_message": "Sortir les déchets végétaux maintenant",
-        "keywords": [
-            "végétal", "végétaux", "feuilles mortes", "gazon", "taille",
-            "élagage", "branche", "herbe",
-        ],
+        # Correspond à : (Déchets Végétaux)
+        "keywords": ["déchets végétaux", "déchets végétal"],
     },
     "dechets_alimentaires": {
         "name": "Déchets Alimentaires",
         "icon": "mdi:food-apple",
         "binary_message": "Sortir les déchets alimentaires maintenant",
-        "keywords": [
-            "alimentaire", "aliment", "nourriture", "résidus alimentaires",
-            "table", "cuisine",
-        ],
+        # Correspond à : (Déchets alimentaires)
+        "keywords": ["déchets alimentaires"],
     },
     "bois": {
         "name": "Bois",
         "icon": "mdi:forest",
         "binary_message": "Sortir le bois maintenant",
-        "keywords": [
-            "bois", "bûche", "bûches", "palette", "planche",
-        ],
+        # Correspond à : (Bois)
+        "keywords": ["(bois)"],
     },
 }
