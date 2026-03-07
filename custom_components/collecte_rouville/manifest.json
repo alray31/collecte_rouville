@@ -5,7 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/alray31/collecte_rouville",
   "issue_tracker": "https://github.com/alray31/collecte_rouville/issues",
-  "codeowners": ["@ton-utilisateur"],
+  "codeowners": ["@alray31"],
   "requirements": ["icalendar>=5.0.0"],
   "iot_class": "cloud_polling",
   "hacs": "1.0.0"
