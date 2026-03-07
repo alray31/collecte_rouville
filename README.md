@@ -12,7 +12,7 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/AlainRaymond564)
 
-# 🗑️ Collecte MRC de Rouville — Intégration HACS Home Assistant
+# 🗑️♻️ Collecte MRC de Rouville — Intégration HACS Home Assistant
 
 🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
 
