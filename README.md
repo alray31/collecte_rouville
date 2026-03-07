@@ -1,6 +1,6 @@
-# collecte_rouville
-🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
+# 🗑️ Collecte MRC de Rouville — Intégration HACS Home Assistant
 
+🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
 
 [![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
 
@@ -19,53 +19,66 @@
 ## Entités créées (par ville)
 
 ### Capteurs (`sensor.*`)
+
 | Entité | Description |
 |--------|-------------|
-| `sensor.collecte_encombrants_stcesaire` | Prochaine date — Encombrants |
-| `sensor.collecte_journaux_stcesaire` | Prochaine date — Journaux |
-| `sensor.collecte_revues_stcesaire` | Prochaine date — Revues et Magazines |
-| `sensor.collecte_ordures_stcesaire` | Prochaine date — Ordures Ménagères Résiduelles |
-| `sensor.collecte_biochets_organiques_stcesaire` | Prochaine date — Biodéchets et Déchets Organiques |
-| `sensor.collecte_dechets_vegetaux_stcesaire` | Prochaine date — Déchets Végétaux |
-| `sensor.collecte_dechets_alimentaires_stcesaire` | Prochaine date — Déchets Alimentaires |
-| `sensor.collecte_bois_stcesaire` | Prochaine date — Bois |
+| `sensor.collecte_volumineux_sur_inscription_stcesaire` | Prochaine date — Collecte volumineux sur inscription |
+| `sensor.recuperation_stcesaire` | Prochaine date — Récupération |
+| `sensor.ordures_menageres_residuelles_stcesaire` | Prochaine date — Ordures Ménagères Résiduelles |
+| `sensor.collecte_de_pellicules_agricoles_stcesaire` | Prochaine date — Collecte de pellicules agricoles |
+| `sensor.collecte_residus_verts_stcesaire` | Prochaine date — Collecte résidus verts |
+| `sensor.collecte_compost_dechets_alimentaires_stcesaire` | Prochaine date — Collecte compost / déchets alimentaires |
+| `sensor.collecte_de_branches_sur_inscription_stcesaire` | Prochaine date — Collecte de branches sur inscription |
 
-**État** : Date ISO (ex: `2025-04-08`)  
+**État** : Date ISO (ex: `2026-04-08`)  
 **Attributs** : `jours_restants`, `dates_futures`, `summary_ics`, `ville`
 
+---
+
 ### Binary Sensors (`binary_sensor.*`)
-Chaque type de collecte dispose d'un binary sensor qui devient **ON** 12 heures avant minuit du jour de collecte et reste actif toute la journée.
+
+#### Alertes "Sortir les bacs" — actifs 12h avant minuit du jour de collecte, restent ON toute la journée
 
 | Entité | Se déclenche |
 |--------|-------------|
-| `binary_sensor.sortir_encombrants_stcesaire` | 12h avant les Encombrants |
-| `binary_sensor.sortir_journaux_stcesaire` | 12h avant les Journaux |
-| `binary_sensor.sortir_revues_stcesaire` | 12h avant les Revues |
-| `binary_sensor.sortir_ordures_stcesaire` | 12h avant les Ordures |
-| `binary_sensor.sortir_biochets_organiques_stcesaire` | 12h avant les Biodéchets |
-| `binary_sensor.sortir_dechets_vegetaux_stcesaire` | 12h avant les Déchets végétaux |
-| `binary_sensor.sortir_dechets_alimentaires_stcesaire` | 12h avant les Déchets alimentaires |
-| `binary_sensor.sortir_bois_stcesaire` | 12h avant le Bois |
+| `binary_sensor.sortir_collecte_volumineux_sur_inscription_stcesaire` | 12h avant la collecte des volumineux |
+| `binary_sensor.sortir_recuperation_stcesaire` | 12h avant la récupération |
+| `binary_sensor.sortir_ordures_menageres_residuelles_stcesaire` | 12h avant les ordures ménagères |
+| `binary_sensor.sortir_collecte_de_pellicules_agricoles_stcesaire` | 12h avant les pellicules agricoles |
+| `binary_sensor.sortir_collecte_residus_verts_stcesaire` | 12h avant les résidus verts |
+| `binary_sensor.sortir_collecte_compost_dechets_alimentaires_stcesaire` | 12h avant le compost / déchets alimentaires |
+| `binary_sensor.sortir_collecte_de_branches_sur_inscription_stcesaire` | 12h avant la collecte de branches |
 
 **Attributs** : `message`, `prochaine_collecte`, `jours_restants`, `activation_a_partir_de`
+
+#### Rappels d'inscription — actifs de J-21 à J-8 avant la collecte
+
+| Entité | Se déclenche |
+|--------|-------------|
+| `binary_sensor.inscrire_collecte_volumineux_stcesaire` | Entre 21 et 8 jours avant la collecte des volumineux |
+| `binary_sensor.inscrire_collecte_branches_stcesaire` | Entre 21 et 8 jours avant la collecte de branches |
+
+**Attributs** : `message`, `prochaine_collecte`, `jours_restants`, `inscription_debut`, `inscription_fin`
 
 ---
 
 ## Installation
 
+### Via HACS (recommandé)
+1. HACS → Intégrations → ⋮ → Dépôts personnalisés
+2. Ajouter l'URL du dépôt GitHub, catégorie **Integration**
+
+[![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
+
+3. Installer l'intégration **Collecte MRC de Rouville** dans HACS et redémarrer HA
+4. **Paramètres → Appareils et Services → + Ajouter une intégration → Collecte MRC de Rouville**
+5. Choisir votre ville dans la liste déroulante
+
 ### Manuel
 1. Copier `custom_components/collecte_rouville/` dans `config/custom_components/`
 2. Redémarrer Home Assistant
-3. **Paramètres → Appareils et services → Ajouter une intégration**
-4. Rechercher **Collecte MRC de Rouville**
-5. Choisir votre ville dans la liste déroulante
-
-### Via HACS
-1. HACS → Intégrations → ⋮ → Dépôts personnalisés
-2. Ajouter l'URL du dépôt GitHub, catégorie **Integration**
-[![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
-3. Installer l'intégration Collecte Rouveille dans HACS et redémarrer HA
-4. Ajouter l'intégration Collecte Rouville dans Paramètres/Appareils et Services/+ ajouter une intégration
+3. **Paramètres → Appareils et Services → + Ajouter une intégration → Collecte MRC de Rouville**
+4. Choisir votre ville dans la liste déroulante
 
 ---
 
@@ -78,9 +91,9 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.sortir_ordures_stcesaire
-          - binary_sensor.sortir_biochets_organiques_stcesaire
-          - binary_sensor.sortir_dechets_vegetaux_stcesaire
+          - binary_sensor.sortir_ordures_menageres_residuelles_stcesaire
+          - binary_sensor.sortir_collecte_compost_dechets_alimentaires_stcesaire
+          - binary_sensor.sortir_collecte_residus_verts_stcesaire
         to: "on"
     action:
       - service: notify.mobile_app_mon_telephone
@@ -89,24 +102,53 @@ automation:
           message: "{{ trigger.to_state.attributes.message }}"
 ```
 
-### Carte Lovelace avec binary sensors
+### Notification pour s'inscrire à une collecte sur inscription
+```yaml
+automation:
+  - alias: "Rappel inscription collecte volumineux"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.inscrire_collecte_volumineux_stcesaire
+        to: "on"
+    action:
+      - service: notify.mobile_app_mon_telephone
+        data:
+          title: "📋 Inscription requise"
+          message: "{{ trigger.to_state.attributes.message }}"
+```
+
+### Carte Lovelace
 ```yaml
 type: entities
 title: 🗑️ Collectes – St-Césaire
 entities:
-  - entity: binary_sensor.sortir_ordures_stcesaire
+  - entity: binary_sensor.sortir_ordures_menageres_residuelles_stcesaire
     name: "Sortir les ordures ?"
-  - entity: sensor.collecte_ordures_stcesaire
-    name: "Prochaine date ordures"
-  - entity: binary_sensor.sortir_biochets_organiques_stcesaire
+  - entity: sensor.ordures_menageres_residuelles_stcesaire
+    name: "Prochaine date — Ordures"
+  - entity: binary_sensor.sortir_recuperation_stcesaire
+    name: "Sortir la récupération ?"
+  - entity: sensor.recuperation_stcesaire
+    name: "Prochaine date — Récupération"
+  - entity: binary_sensor.sortir_collecte_compost_dechets_alimentaires_stcesaire
     name: "Sortir le compost ?"
-  - entity: sensor.collecte_biochets_organiques_stcesaire
-    name: "Prochaine date compost"
-  - entity: binary_sensor.sortir_dechets_vegetaux_stcesaire
-    name: "Sortir les déchets végétaux ?"
-  - entity: sensor.collecte_dechets_vegetaux_stcesaire
-    name: "Prochaine date déchets végétaux"
+  - entity: sensor.collecte_compost_dechets_alimentaires_stcesaire
+    name: "Prochaine date — Compost"
+  - entity: binary_sensor.sortir_collecte_residus_verts_stcesaire
+    name: "Sortir les résidus verts ?"
+  - entity: sensor.collecte_residus_verts_stcesaire
+    name: "Prochaine date — Résidus verts"
+  - entity: binary_sensor.inscrire_collecte_volumineux_stcesaire
+    name: "S'inscrire — Volumineux ?"
+  - entity: sensor.collecte_volumineux_sur_inscription_stcesaire
+    name: "Prochaine date — Volumineux"
+  - entity: binary_sensor.inscrire_collecte_branches_stcesaire
+    name: "S'inscrire — Branches ?"
+  - entity: sensor.collecte_de_branches_sur_inscription_stcesaire
+    name: "Prochaine date — Branches"
 ```
+
+---
 
 ## ⚠️ Avis de non-affiliation
 
@@ -119,6 +161,8 @@ Pour toute question, problème ou suggestion concernant **cette intégration**, 
 👉 **[Ouvrir un ticket (GitHub Issues)](https://github.com/alray31/collecte_rouville/issues)**
 
 Veuillez **ne pas contacter la MRC de Rouville ni ses municipalités** pour obtenir du support relatif à cette intégration.
+
+---
 
 ## 📄 Licence
 
