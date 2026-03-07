@@ -1,3 +1,5 @@
+[![Stars](https://img.shields.io/github/stars/alray31/collecte_rouville?style=for-the-badge)](#) [![Last commit](https://img.shields.io/github/last-commit/alray31/collecte_rouville?style=for-the-badge)](#)
+
 [![HACS Default][hacs_shield]][hacs]
 [![GitHub Latest Release][releases_shield]][latest_release]
 
@@ -7,6 +9,8 @@
 [latest_release]: https://github.com/alray31/collecte_rouville/releases/latest
 [releases_shield]: https://img.shields.io/github/release/alray31/collecte_rouville
 
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/AlainRaymond564)
 
 # 🗑️ Collecte MRC de Rouville — Intégration HACS Home Assistant
 
