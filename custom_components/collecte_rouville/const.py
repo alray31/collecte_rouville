@@ -3,7 +3,7 @@
 DOMAIN = "collecte_rouville"
 CONF_ICS_URL = "ics_url"
 CONF_VILLE = "ville"
-SCAN_INTERVAL_HOURS = 12
+SCAN_INTERVAL_HOURS = 1
 
 # Heures avant l'événement pour activer le binary sensor "sortir les bacs"
 BINARY_SENSOR_HOURS_BEFORE = 12
