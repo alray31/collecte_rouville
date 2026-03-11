@@ -13,6 +13,17 @@ from . import CollecteCoordinator
 from .const import COLLECTE_TYPES, CONF_VILLE, DOMAIN
 
 
+def _jours_restants_texte(jours: int | None) -> str | None:
+    """Convertit un nombre de jours en texte lisible."""
+    if jours is None:
+        return None
+    if jours == 0:
+        return "Aujourd'hui"
+    if jours == 1:
+        return "Demain"
+    return f"Dans {jours} jours"
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -26,7 +37,7 @@ async def async_setup_entry(
 
 
 class CollecteSensor(CoordinatorEntity, SensorEntity):
-    """Capteur indiquant la prochaine date pour un type de collecte."""
+    """Capteur indiquant le délai avant la prochaine collecte."""
 
     def __init__(self, coordinator: CollecteCoordinator, ctype: str, ville: str) -> None:
         super().__init__(coordinator)
@@ -47,13 +58,15 @@ class CollecteSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def state(self) -> str | None:
-        dt = self._info.get("prochaine_date")
-        return dt.isoformat() if dt else None
+        """Retourne le texte lisible : Aujourd'hui / Demain / Dans X jours."""
+        return _jours_restants_texte(self._info.get("jours_restants"))
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         info = self._info
+        prochaine = info.get("prochaine_date")
         return {
+            "prochaine_date": prochaine.isoformat() if prochaine else None,
             "jours_restants": info.get("jours_restants"),
             "dates_futures": info.get("dates_futures", []),
             "summary_ics": info.get("summary"),
