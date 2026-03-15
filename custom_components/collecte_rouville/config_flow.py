@@ -82,7 +82,10 @@ class CollecteRouvilleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="adresse",
             data_schema=schema,
             errors=errors,
-            description_placeholders={"ville": self._ville},
+            description_placeholders={
+                "ville": self._ville,
+                "widget_url": "https://widget.publidata.ca/NKx0JtQVX3/",
+            },
         )
 
     async def async_step_choisir_adresse(
@@ -100,7 +103,7 @@ class CollecteRouvilleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
-                title=f"{label}",
+                title=label,
                 data={
                     CONF_VILLE: self._ville,
                     CONF_ADDRESS_ID: info["address_id"],
@@ -151,10 +154,14 @@ class CollecteRouvilleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if props.get("type") != "housenumber":
                     continue
 
-                label = props.get("label", "")
+                label_raw = props.get("label", "")
                 address_id = props.get("id", "")
-                if not label or not address_id or len(coords) < 2:
+                if not label_raw or not address_id or len(coords) < 2:
                     continue
+
+                # Enlever le code postal du label (ex: "J3L 6Z5 ")
+                import re
+                label = re.sub(r"\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b\s*", "", label_raw).strip()
 
                 suggestions[label] = {
                     "address_id": address_id,
