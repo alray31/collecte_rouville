@@ -1,30 +1,27 @@
-"""Binary sensors pour Collecte Rouville."""
+"""Binary sensors pour Collecte MRC de Rouville v3.0."""
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Any
+from datetime import date, datetime, timedelta
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import CollecteCoordinator
+from . import CollecteRouvilleCoordinator
 from .const import (
     BINARY_SENSOR_HOURS_BEFORE,
     COLLECTE_INSCRIPTION,
     COLLECTE_TYPES,
+    CONF_ADDRESS_LABEL,
     CONF_VILLE,
     DOMAIN,
     INSCRIPTION_JOURS_AVANT_DEBUT,
     INSCRIPTION_JOURS_AVANT_FIN,
 )
-
-# Réévaluation de l'état ON/OFF toutes les minutes
-# (indépendamment du polling ICS)
-REEVALUATION_INTERVAL = timedelta(minutes=1)
 
 
 async def async_setup_entry(
@@ -32,165 +29,156 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: CollecteCoordinator = hass.data[DOMAIN][entry.entry_id]
-    ville = entry.data.get(CONF_VILLE, "")
+    """Set up binary sensors."""
+    coordinator: CollecteRouvilleCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
-    for ctype in COLLECTE_TYPES:
-        entities.append(CollecteSortirBinarySensor(coordinator, ctype, ville))
-        if ctype in COLLECTE_INSCRIPTION:
-            entities.append(CollecteInscriptionBinarySensor(coordinator, ctype, ville))
+
+    for collecte_key, collecte_info in COLLECTE_TYPES.items():
+        # Binary sensor "sortir"
+        entities.append(
+            CollecteSortirBinarySensor(coordinator, entry, collecte_key, collecte_info)
+        )
+        # Binary sensor "inscription" pour volumineux et branches
+        if collecte_key in COLLECTE_INSCRIPTION:
+            entities.append(
+                CollecteInscriptionBinarySensor(
+                    coordinator, entry, collecte_key, collecte_info
+                )
+            )
 
     async_add_entities(entities)
 
 
-def _ville_slug(ville: str) -> str:
-    return ville.lower().replace(" ", "_").replace("-", "_").replace("'", "_")
-
-
 class _CollecteBaseBinarySensor(CoordinatorEntity, BinarySensorEntity):
-    """
-    Classe de base pour les binary sensors de collecte.
-    Ajoute une réévaluation toutes les minutes via async_track_time_interval
-    pour que le passage ON/OFF soit précis à la minute, indépendamment
-    de la fréquence de polling du coordinator.
-    """
+    """Classe de base avec réévaluation à la minute."""
 
-    def __init__(self, coordinator: CollecteCoordinator, ctype: str, ville: str) -> None:
+    def __init__(
+        self,
+        coordinator: CollecteRouvilleCoordinator,
+        entry: ConfigEntry,
+        collecte_key: str,
+        collecte_info: dict,
+    ) -> None:
         super().__init__(coordinator)
-        self._ctype = ctype
-        self._ville = ville
-        self._unsub_timer = None
+        self._collecte_key = collecte_key
+        self._collecte_info = collecte_info
+        self._entry = entry
+        self._unsub = None
 
     async def async_added_to_hass(self) -> None:
-        """Démarrer le timer de réévaluation à la minute."""
         await super().async_added_to_hass()
-
-        @callback
-        def _reevaluate(_now: datetime) -> None:
-            """Forcer HA à relire is_on sans refetcher le ICS."""
-            self.async_write_ha_state()
-
-        self._unsub_timer = async_track_time_interval(
-            self.hass, _reevaluate, REEVALUATION_INTERVAL
+        self._unsub = async_track_time_interval(
+            self.hass,
+            self._async_time_update,
+            timedelta(minutes=1),
         )
 
     async def async_will_remove_from_hass(self) -> None:
-        """Annuler le timer à la suppression de l'entité."""
-        if self._unsub_timer:
-            self._unsub_timer()
-            self._unsub_timer = None
+        if self._unsub:
+            self._unsub()
+
+    async def _async_time_update(self, _now=None) -> None:
+        self.async_write_ha_state()
 
     @property
-    def _info(self) -> dict:
-        if not self.coordinator.data:
-            return {}
-        return self.coordinator.data.get(self._ctype, {})
-
-    @property
-    def device_info(self):
-        slug = _ville_slug(self._ville)
-        return {
-            "identifiers": {(DOMAIN, slug)},
-            "name": f"Collecte – {self._ville}",
-            "manufacturer": "Publidata / MRC de Rouville",
-            "model": "Calendrier ICS municipal",
-        }
+    def _data(self) -> dict:
+        return self.coordinator.data.get(self._collecte_key, {})
 
 
 class CollecteSortirBinarySensor(_CollecteBaseBinarySensor):
-    """
-    Actif 12h avant minuit du jour de collecte, reste ON toute la journée.
-    Fenêtre : [minuit_J - 12h,  minuit_J + 24h)
-    Réévalué à la minute près grâce au timer hérité.
-    """
+    """ON quand il faut sortir les bacs (12h avant jusqu'au lendemain soir)."""
 
-    def __init__(self, coordinator: CollecteCoordinator, ctype: str, ville: str) -> None:
-        super().__init__(coordinator, ctype, ville)
-        meta = COLLECTE_TYPES[ctype]
-        slug = _ville_slug(ville)
-
-        self._attr_unique_id = f"{slug}_sortir_{ctype}"
-        self._attr_name = f"Sortir – {meta['name']} – {ville}"
-        self._attr_icon = meta["icon"]
-        self._message = meta["binary_message"]
+    def __init__(self, coordinator, entry, collecte_key, collecte_info):
+        super().__init__(coordinator, entry, collecte_key, collecte_info)
+        ville = entry.data.get(CONF_VILLE, "")
+        self._attr_unique_id = f"{entry.entry_id}_{collecte_key}_sortir"
+        self._attr_name = f"Sortir {collecte_info['name']} - {ville}"
+        self._attr_icon = collecte_info["icon"]
 
     @property
     def is_on(self) -> bool:
-        prochaine = self._info.get("prochaine_date")
-        if prochaine is None:
+        prochaine = self._data.get("prochaine_date")
+        if not prochaine:
             return False
+
         now = datetime.now()
-        midnight = datetime(prochaine.year, prochaine.month, prochaine.day)
-        return (midnight - timedelta(hours=BINARY_SENSOR_HOURS_BEFORE)) <= now < (midnight + timedelta(hours=24))
+        today = now.date()
+
+        # Activation : minuit_J - 12h jusqu'à minuit_J + 24h
+        activation = datetime.combine(prochaine, datetime.min.time()) - timedelta(
+            hours=BINARY_SENSOR_HOURS_BEFORE
+        )
+        desactivation = datetime.combine(
+            prochaine + timedelta(days=1), datetime.min.time()
+        ) + timedelta(hours=24)
+
+        return activation <= now < desactivation
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        info = self._info
-        prochaine = info.get("prochaine_date")
-        attrs: dict[str, Any] = {
-            "message": self._message if self.is_on else None,
-            "prochaine_collecte": prochaine.isoformat() if prochaine else None,
-            "jours_restants": info.get("jours_restants"),
-            "ville": self._ville,
-            "heures_avant_activation": BINARY_SENSOR_HOURS_BEFORE,
-        }
+    def extra_state_attributes(self) -> dict:
+        data = self._data
+        prochaine = data.get("prochaine_date")
         if prochaine:
-            midnight = datetime(prochaine.year, prochaine.month, prochaine.day)
-            attrs["activation_a_partir_de"] = (midnight - timedelta(hours=BINARY_SENSOR_HOURS_BEFORE)).isoformat()
-        return attrs
+            activation = datetime.combine(prochaine, datetime.min.time()) - timedelta(
+                hours=BINARY_SENSOR_HOURS_BEFORE
+            )
+        else:
+            activation = None
+
+        return {
+            "prochaine_collecte": prochaine.isoformat() if prochaine else None,
+            "jours_restants": data.get("jours_restants"),
+            "activation_a_partir_de": activation.isoformat() if activation else None,
+            "message": (
+                f"Sortir les {self._collecte_info['name'].lower()} !"
+                if self.is_on
+                else None
+            ),
+            "adresse": self._entry.data.get(CONF_ADDRESS_LABEL),
+        }
 
 
 class CollecteInscriptionBinarySensor(_CollecteBaseBinarySensor):
-    """
-    Actif de J-21 à J-8 avant la collecte sur inscription.
-    Fenêtre : [minuit_J - 21 jours,  minuit_J - 8 jours)
-    Réévalué à la minute près grâce au timer hérité.
-    """
+    """ON pendant la fenêtre d'inscription (J-21 à J-8)."""
 
-    def __init__(self, coordinator: CollecteCoordinator, ctype: str, ville: str) -> None:
-        super().__init__(coordinator, ctype, ville)
-        meta = COLLECTE_TYPES[ctype]
-        slug = _ville_slug(ville)
-
-        self._attr_unique_id = f"{slug}_inscription_{ctype}"
-
-        if ctype == "volumineux":
-            self._attr_name = f"S'inscrire – Collecte volumineux – {ville}"
-            self._message = "S'inscrire à la collecte des volumineux maintenant"
-        elif ctype == "branches":
-            self._attr_name = f"S'inscrire – Collecte de branches – {ville}"
-            self._message = "S'inscrire à la collecte de branches maintenant"
-        else:
-            self._attr_name = f"S'inscrire – {meta['name']} – {ville}"
-            self._message = f"S'inscrire à la collecte – {meta['name']}"
-
-        self._attr_icon = meta["icon"]
+    def __init__(self, coordinator, entry, collecte_key, collecte_info):
+        super().__init__(coordinator, entry, collecte_key, collecte_info)
+        ville = entry.data.get(CONF_VILLE, "")
+        self._attr_unique_id = f"{entry.entry_id}_{collecte_key}_inscription"
+        self._attr_name = f"Inscription {collecte_info['name']} - {ville}"
+        self._attr_icon = collecte_info["icon"]
 
     @property
     def is_on(self) -> bool:
-        prochaine = self._info.get("prochaine_date")
-        if prochaine is None:
+        prochaine = self._data.get("prochaine_date")
+        if not prochaine:
             return False
-        now = datetime.now()
-        midnight = datetime(prochaine.year, prochaine.month, prochaine.day)
-        window_start = midnight - timedelta(days=INSCRIPTION_JOURS_AVANT_DEBUT)
-        window_end   = midnight - timedelta(days=INSCRIPTION_JOURS_AVANT_FIN)
-        return window_start <= now < window_end
+
+        today = date.today()
+        jours = (prochaine - today).days
+        return INSCRIPTION_JOURS_AVANT_FIN <= jours <= INSCRIPTION_JOURS_AVANT_DEBUT
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        info = self._info
-        prochaine = info.get("prochaine_date")
-        attrs: dict[str, Any] = {
-            "message": self._message if self.is_on else None,
-            "prochaine_collecte": prochaine.isoformat() if prochaine else None,
-            "jours_restants": info.get("jours_restants"),
-            "ville": self._ville,
-            "fenetre_inscription": f"J-{INSCRIPTION_JOURS_AVANT_DEBUT} à J-{INSCRIPTION_JOURS_AVANT_FIN}",
-        }
+    def extra_state_attributes(self) -> dict:
+        data = self._data
+        prochaine = data.get("prochaine_date")
+        today = date.today()
+
         if prochaine:
-            midnight = datetime(prochaine.year, prochaine.month, prochaine.day)
-            attrs["inscription_debut"] = (midnight - timedelta(days=INSCRIPTION_JOURS_AVANT_DEBUT)).isoformat()
-            attrs["inscription_fin"]   = (midnight - timedelta(days=INSCRIPTION_JOURS_AVANT_FIN)).isoformat()
-        return attrs
+            debut = prochaine - timedelta(days=INSCRIPTION_JOURS_AVANT_DEBUT)
+            fin = prochaine - timedelta(days=INSCRIPTION_JOURS_AVANT_FIN)
+        else:
+            debut = fin = None
+
+        return {
+            "prochaine_collecte": prochaine.isoformat() if prochaine else None,
+            "inscription_debut": debut.isoformat() if debut else None,
+            "inscription_fin": fin.isoformat() if fin else None,
+            "message": (
+                f"Inscription {self._collecte_info['name'].lower()} ouverte !"
+                if self.is_on
+                else None
+            ),
+            "adresse": self._entry.data.get(CONF_ADDRESS_LABEL),
+        }
