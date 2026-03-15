@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -21,37 +20,33 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensors."""
     coordinator: CollecteRouvilleCoordinator = hass.data[DOMAIN][entry.entry_id]
-
-    entities = []
-    for collecte_key, collecte_info in COLLECTE_TYPES.items():
-        entities.append(
-            CollecteSensor(coordinator, entry, collecte_key, collecte_info)
-        )
-
+    entities = [
+        CollecteSensor(coordinator, entry, key, info)
+        for key, info in COLLECTE_TYPES.items()
+    ]
     async_add_entities(entities)
 
 
 class CollecteSensor(CoordinatorEntity, SensorEntity):
     """Sensor pour une collecte spécifique."""
 
-    def __init__(
-        self,
-        coordinator: CollecteRouvilleCoordinator,
-        entry: ConfigEntry,
-        collecte_key: str,
-        collecte_info: dict,
-    ) -> None:
+    def __init__(self, coordinator, entry, collecte_key, collecte_info):
         super().__init__(coordinator)
         self._collecte_key = collecte_key
         self._collecte_info = collecte_info
         self._entry = entry
 
         ville = entry.data.get(CONF_VILLE, "")
-        label = entry.data.get(CONF_ADDRESS_LABEL, "")
-
         self._attr_unique_id = f"{entry.entry_id}_{collecte_key}_sensor"
-        self._attr_name = f"Collecte {collecte_info['name']} - {ville}"
+        self._attr_name = collecte_info["name"]
         self._attr_icon = collecte_info["icon"]
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=f"Collecte {ville}",
+            manufacturer="MRC de Rouville",
+            model="Publidata API",
+            entry_type="service",
+        )
 
     @property
     def _data(self) -> dict:
@@ -74,7 +69,6 @@ class CollecteSensor(CoordinatorEntity, SensorEntity):
         data = self._data
         prochaine = data.get("prochaine_date")
         futures = data.get("dates_futures", [])
-
         return {
             "prochaine_date": prochaine.isoformat() if prochaine else None,
             "jours_restants": data.get("jours_restants"),
