@@ -1,4 +1,5 @@
-"""Config flow pour Collecte Rouville — sélection de ville."""
+"""Config flow pour Collecte MRC de Rouville v3.0."""
+
 from __future__ import annotations
 
 import logging
@@ -6,77 +7,159 @@ from typing import Any
 
 import aiohttp
 import voluptuous as vol
-from icalendar import Calendar
-
 from homeassistant import config_entries
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 
-from .const import CONF_ICS_URL, CONF_VILLE, DOMAIN, VILLES, VILLES_LIST
+from .const import (
+    API_GEOCODER_URL,
+    CONF_ADDRESS_ID,
+    CONF_ADDRESS_LABEL,
+    CONF_ADRESSE,
+    CONF_LAT,
+    CONF_LON,
+    CONF_VILLE,
+    DOMAIN,
+    VILLES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _build_schema() -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_VILLE): vol.In(VILLES_LIST),
-        }
-    )
+class CollecteRouvilleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow en 2 étapes : ville → adresse."""
 
+    VERSION = 3
 
-async def _validate_ics(session: aiohttp.ClientSession, url: str) -> str | None:
-    """Retourne None si OK, sinon un code d'erreur."""
-    try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as resp:
-            if resp.status != 200:
-                return "cannot_connect"
-            raw = await resp.read()
-    except aiohttp.ClientError:
-        return "cannot_connect"
-    try:
-        cal = Calendar.from_ical(raw)
-        events = [c for c in cal.walk() if c.name == "VEVENT"]
-        if not events:
-            return "empty_calendar"
-    except Exception:
-        return "invalid_ics"
-    return None
-
-
-class CollecteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle the config flow for Collecte Rouville."""
-
-    VERSION = 1
+    def __init__(self) -> None:
+        self._ville: str = ""
+        self._citycode: str = ""
+        self._adresse_query: str = ""
+        self._suggestions: dict[str, dict] = {}  # label → {address_id, lat, lon}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
-        errors: dict[str, str] = {}
+    ) -> FlowResult:
+        """Étape 1 : Choisir la ville."""
+        errors = {}
 
         if user_input is not None:
-            ville = user_input[CONF_VILLE]
-            ics_url = VILLES[ville]["ics_url"]
+            self._ville = user_input[CONF_VILLE]
+            self._citycode = VILLES[self._ville]
+            return await self.async_step_adresse()
 
-            session = async_get_clientsession(self.hass)
-            error = await _validate_ics(session, ics_url)
-
-            if error:
-                errors["base"] = error
-            else:
-                ville_id = ville.lower().replace(" ", "_").replace("-", "_").replace("'", "_")
-                await self.async_set_unique_id(f"collecte_{ville_id}")
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title=f"Collecte – {ville}",
-                    data={
-                        CONF_VILLE: ville,
-                        CONF_ICS_URL: ics_url,
-                    },
-                )
+        schema = vol.Schema({
+            vol.Required(CONF_VILLE): vol.In(sorted(VILLES.keys()))
+        })
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_build_schema(),
+            data_schema=schema,
             errors=errors,
         )
+
+    async def async_step_adresse(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Étape 2 : Taper l'adresse pour géocodage."""
+        errors = {}
+
+        if user_input is not None:
+            self._adresse_query = user_input[CONF_ADRESSE]
+            # Appeler le géocodeur
+            suggestions = await self._geocode(self._adresse_query)
+            if not suggestions:
+                errors[CONF_ADRESSE] = "adresse_non_trouvee"
+            else:
+                self._suggestions = suggestions
+                return await self.async_step_choisir_adresse()
+
+        schema = vol.Schema({
+            vol.Required(CONF_ADRESSE): str,
+        })
+
+        return self.async_show_form(
+            step_id="adresse",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"ville": self._ville},
+        )
+
+    async def async_step_choisir_adresse(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Étape 3 : Choisir parmi les suggestions."""
+        errors = {}
+
+        if user_input is not None:
+            label = user_input["adresse_choisie"]
+            info = self._suggestions[label]
+
+            # Vérifier unicité
+            await self.async_set_unique_id(info["address_id"])
+            self._abort_if_unique_id_configured()
+
+            return self.async_create_entry(
+                title=f"{label}",
+                data={
+                    CONF_VILLE: self._ville,
+                    CONF_ADDRESS_ID: info["address_id"],
+                    CONF_LAT: info["lat"],
+                    CONF_LON: info["lon"],
+                    CONF_ADDRESS_LABEL: label,
+                },
+            )
+
+        schema = vol.Schema({
+            vol.Required("adresse_choisie"): vol.In(list(self._suggestions.keys()))
+        })
+
+        return self.async_show_form(
+            step_id="choisir_adresse",
+            data_schema=schema,
+            errors=errors,
+        )
+
+    async def _geocode(self, query: str) -> dict[str, dict]:
+        """Appelle l'API géocodeur Publidata."""
+        params = {
+            "q": query,
+            "limit": 10,
+            "lookup": "publidata",
+            "citycode": self._citycode,
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(API_GEOCODER_URL, params=params) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Erreur géocodage: %s", err)
+            return {}
+
+        suggestions = {}
+        # La réponse est une liste avec un objet data contenant features
+        items = data if isinstance(data, list) else [data]
+        for item in items:
+            features = item.get("data", {}).get("features", [])
+            for feature in features:
+                props = feature.get("properties", {})
+                coords = feature.get("geometry", {}).get("coordinates", [])
+
+                # Seulement les adresses avec numéro civique
+                if props.get("type") != "housenumber":
+                    continue
+
+                label = props.get("label", "")
+                address_id = props.get("id", "")
+                if not label or not address_id or len(coords) < 2:
+                    continue
+
+                suggestions[label] = {
+                    "address_id": address_id,
+                    "lon": coords[0],
+                    "lat": coords[1],
+                }
+
+        return suggestions
