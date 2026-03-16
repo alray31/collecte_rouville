@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Collecte MRC de Rouville",
+        "description": "Seleccione su municipio.",
+        "data": {
+          "ville": "Municipio"
+        }
+      },
+      "adresse": {
+        "title": "Su dirección",
+        "description": "Ingrese su dirección en {ville} para obtener el calendario de recolección de residuos de su sector.\n\nConsejo: Consulte el widget de su ciudad ({widget_url}) para ver el formato de dirección esperado. Ejemplo: 123 rue des Érables",
+        "data": {
+          "adresse": "Dirección (ej: 123 rue des Érables)"
+        }
+      },
+      "choisir_adresse": {
+        "title": "Confirmar dirección",
+        "description": "Elija su dirección de la lista.",
+        "data": {
+          "adresse_choisie": "Dirección"
+        }
+      }
+    },
+    "error": {
+      "adresse_non_trouvee": "No se encontró ninguna dirección. Consulte el widget de su ciudad para ver el formato esperado. Ejemplo: 123 rue des Érables"
+    },
+    "abort": {
+      "already_configured": "Esta dirección ya está configurada."
+    }
+  }
+}
