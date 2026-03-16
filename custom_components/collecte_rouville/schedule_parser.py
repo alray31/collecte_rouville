@@ -13,7 +13,7 @@ Formats supportés :
 """
 
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 # Mapping jour abrégé → numéro weekday (0=lundi)
@@ -220,3 +220,183 @@ def dates_futures(
     """Retourne les N prochaines dates de collecte."""
     dates = parse_schedule(opening_hours, today)
     return dates[:max_dates]
+
+
+# ─── Écocentres ──────────────────────────────────────────────────────────────
+
+def parse_ecocentre_schedule(opening_hours: str, now: Optional[datetime] = None):
+    """
+    Parse les horaires d'écocentre et retourne:
+    - is_open (bool) : ouvert en ce moment
+    - prochaine_ouverture (datetime) : prochain créneau d'ouverture
+    - horaires_texte (str) : description lisible des horaires
+
+    Formats supportés:
+      "2026 Apr 09-2026 Nov 28 Th-Sa 09:00-16:30"  → plage de dates + jours + heures
+      "2025 Nov 01-2026 Mar 28 Th-Sa 09:00-16:30"  → idem cross-année
+      "2025 Dec 24-2026 Jan 03 off"                 → exception fermé
+    """
+    from datetime import datetime as dt
+    if now is None:
+        now = dt.now()
+
+    segments = _parse_ecocentre_segments(opening_hours)
+    is_open = _is_open_now(segments, now)
+    prochaine = _next_opening(segments, now)
+
+    return {
+        "is_open": is_open,
+        "prochaine_ouverture": prochaine,
+    }
+
+
+def _parse_ecocentre_segments(opening_hours: str) -> list[dict]:
+    """Parse tous les segments d'horaire d'un écocentre."""
+    segments = []
+    for part in opening_hours.split(";"):
+        part = part.strip()
+        if not part:
+            continue
+        seg = _parse_ecocentre_segment(part)
+        if seg:
+            segments.append(seg)
+    return segments
+
+
+def _parse_ecocentre_segment(s: str) -> Optional[dict]:
+    """
+    Parse un segment comme:
+      "2026 Apr 09-2026 Nov 28 Th-Sa 09:00-16:30"
+      "2025 Nov 01-2026 Mar 28 Th-Sa 09:00-16:30"
+      "2025 Dec 24-2026 Jan 03 off"
+    """
+    # Format avec "off" (fermeture exceptionnelle)
+    m = re.match(
+        r"(\d{4})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)"
+        r"-(\d{4})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)\s+off",
+        s
+    )
+    if m:
+        return {
+            "type": "off",
+            "start": date(int(m.group(1)), MONTH_MAP[m.group(2)], int(m.group(3))),
+            "end": date(int(m.group(4)), MONTH_MAP[m.group(5)], int(m.group(6))),
+        }
+
+    # Format normal avec jours et heures
+    m = re.match(
+        r"(\d{4})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)"
+        r"-(\d{4})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)"
+        r"\s+((?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)"
+        r"\s+(\d{2}:\d{2})-(\d{2}:\d{2})",
+        s
+    )
+    if m:
+        days_str = m.group(7)
+        days = _parse_day_range(days_str)
+        open_h, open_m = map(int, m.group(8).split(":"))
+        close_h, close_m = map(int, m.group(9).split(":"))
+        return {
+            "type": "open",
+            "start": date(int(m.group(1)), MONTH_MAP[m.group(2)], int(m.group(3))),
+            "end": date(int(m.group(4)), MONTH_MAP[m.group(5)], int(m.group(6))),
+            "days": days,  # liste de weekday (0=lundi)
+            "open_time": (open_h, open_m),
+            "close_time": (close_h, close_m),
+        }
+
+    return None
+
+
+def _parse_day_range(s: str) -> list[int]:
+    """
+    Parse "Th-Sa" → [3, 4, 5]
+    Parse "We" → [2]
+    """
+    if "-" in s:
+        parts = s.split("-")
+        start_day = DAY_MAP[parts[0]]
+        end_day = DAY_MAP[parts[1]]
+        if end_day >= start_day:
+            return list(range(start_day, end_day + 1))
+        else:
+            return list(range(start_day, 7)) + list(range(0, end_day + 1))
+    else:
+        return [DAY_MAP[s]]
+
+
+def _is_open_now(segments: list[dict], now) -> bool:
+    """Détermine si l'écocentre est ouvert maintenant."""
+    from datetime import datetime as dt
+    today = now.date()
+
+    # Vérifier d'abord les exceptions "off"
+    for seg in segments:
+        if seg["type"] == "off":
+            if seg["start"] <= today <= seg["end"]:
+                return False
+
+    # Vérifier les segments "open"
+    for seg in segments:
+        if seg["type"] != "open":
+            continue
+        if not (seg["start"] <= today <= seg["end"]):
+            continue
+        if now.weekday() not in seg["days"]:
+            continue
+        open_h, open_m = seg["open_time"]
+        close_h, close_m = seg["close_time"]
+        open_dt = now.replace(hour=open_h, minute=open_m, second=0, microsecond=0)
+        close_dt = now.replace(hour=close_h, minute=close_m, second=0, microsecond=0)
+        if open_dt <= now < close_dt:
+            return True
+
+    return False
+
+
+def _next_opening(segments: list[dict], now) -> Optional[datetime]:
+    """Trouve le prochain créneau d'ouverture."""
+    from datetime import datetime as dt
+    today = now.date()
+    cutoff = today + timedelta(days=365)
+
+    candidates = []
+
+    for seg in segments:
+        if seg["type"] != "open":
+            continue
+
+        # Parcourir les jours dans la plage du segment
+        current = max(seg["start"], today)
+        while current <= seg["end"] and current <= cutoff:
+            if current.weekday() in seg["days"]:
+                open_h, open_m = seg["open_time"]
+                open_dt = datetime.combine(current, datetime.min.time()).replace(
+                    hour=open_h, minute=open_m
+                )
+
+                # Si c'est aujourd'hui, vérifier que l'heure n'est pas passée
+                if current == today:
+                    close_h, close_m = seg["close_time"]
+                    close_dt = datetime.combine(current, datetime.min.time()).replace(
+                        hour=close_h, minute=close_m
+                    )
+                    if now >= close_dt:
+                        current += timedelta(days=1)
+                        continue
+
+                # Vérifier que ce jour n'est pas dans une exception "off"
+                is_off = any(
+                    s["type"] == "off" and s["start"] <= current <= s["end"]
+                    for s in segments
+                )
+                if not is_off:
+                    candidates.append(open_dt)
+                    break  # Premier jour valide de ce segment suffit
+
+            current += timedelta(days=1)
+
+    if not candidates:
+        return None
+
+    return min(candidates)
