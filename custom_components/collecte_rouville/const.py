@@ -77,3 +77,23 @@ CONF_ADDRESS_ID = "address_id"
 CONF_LAT = "lat"
 CONF_LON = "lon"
 CONF_ADDRESS_LABEL = "address_label"
+
+# Écocentres — IDs fixes pour toute la MRC
+ECOCENTRES = {
+    "marieville": {
+        "name": "Écocentre de Marieville",
+        "facility_id": 31,
+        "service_id": 1269,
+        "icon": "mdi:recycle",
+        "adresse": "135 ch. du Ruisseau Saint-Louis Est, Marieville",
+    },
+    "saint_cesaire": {
+        "name": "Écocentre de Saint-Césaire",
+        "facility_id": 34,
+        "service_id": 1338,
+        "icon": "mdi:recycle",
+        "adresse": "275 route 112, Saint-Césaire",
+    },
+}
+
+API_FACILITY_URL = f"{API_BASE_URL}/search"
