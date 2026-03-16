@@ -10,7 +10,7 @@
       },
       "adresse": {
         "title": "Votre adresse",
-        "description": "Entrez votre adresse à **{ville}** pour obtenir les collectes de votre secteur.\n\n💡 Conseil : Consultez [le widget de votre ville]({widget_url}) pour voir le format d'adresse attendu (ex: **123 rue des Érables**).",
+        "description": "Entrez votre adresse à {ville} pour obtenir les collectes de votre secteur.\n\nConseil : Consultez le widget de votre ville ({widget_url}) pour voir le format d'adresse attendu. Exemple : 123 rue des Érables",
         "data": {
           "adresse": "Adresse (ex: 123 rue des Érables)"
         }
@@ -24,7 +24,7 @@
       }
     },
     "error": {
-      "adresse_non_trouvee": "Aucune adresse trouvée. Consultez le widget de votre ville pour voir le format exact (ex: 123 rue des Érables)."
+      "adresse_non_trouvee": "Aucune adresse trouvée. Consultez le widget de votre ville pour voir le format exact. Exemple : 123 rue des Érables"
     },
     "abort": {
       "already_configured": "Cette adresse est déjà configurée."
