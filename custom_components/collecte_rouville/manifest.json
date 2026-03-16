@@ -1,7 +1,6 @@
-{
   "domain": "collecte_rouville",
   "name": "Collecte MRC de Rouville",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "config_flow": true,
   "documentation": "https://github.com/alray31/collecte_rouville",
   "issue_tracker": "https://github.com/alray31/collecte_rouville/issues",
@@ -9,5 +8,3 @@
   "dependencies": [],
   "codeowners": ["@alray31"],
   "iot_class": "cloud_polling"
-}
-
