@@ -96,6 +96,7 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
         source = hits[0]["_source"]
         opening_hours = source.get("opening_hours", "")
+        _LOGGER.warning("Écocentre %s opening_hours: '%s'", service_id, opening_hours)
         if not opening_hours:
             return {"is_open": False, "prochaine_ouverture": None}
 
