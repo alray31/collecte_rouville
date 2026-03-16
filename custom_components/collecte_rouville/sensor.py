@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import CollecteRouvilleCoordinator
+from .ecocentre_sensor import create_ecocentre_entities
 from .const import COLLECTE_TYPES, CONF_ADDRESS_LABEL, CONF_VILLE, DOMAIN
 
 
@@ -24,6 +25,11 @@ async def async_setup_entry(
         CollecteSensor(coordinator, entry, key, info)
         for key, info in COLLECTE_TYPES.items()
     ]
+    # Ajouter les sensors de prochaine ouverture des écocentres
+    from .ecocentre_sensor import EcocentreProchaineSensor
+    from .const import ECOCENTRES
+    for eco_key, eco_info in ECOCENTRES.items():
+        entities.append(EcocentreProchaineSensor(coordinator, entry, eco_key, eco_info))
     async_add_entities(entities)
 
 
