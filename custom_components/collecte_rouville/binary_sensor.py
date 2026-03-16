@@ -37,6 +37,11 @@ async def async_setup_entry(
         entities.append(CollecteSortirBinarySensor(coordinator, entry, key, info))
         if key in COLLECTE_INSCRIPTION:
             entities.append(CollecteInscriptionBinarySensor(coordinator, entry, key, info))
+    # Ajouter les binary sensors ouvert/fermé des écocentres
+    from .ecocentre_sensor import EcocentreOuvertBinarySensor
+    from .const import ECOCENTRES
+    for eco_key, eco_info in ECOCENTRES.items():
+        entities.append(EcocentreOuvertBinarySensor(coordinator, entry, eco_key, eco_info))
     async_add_entities(entities)
 
 
