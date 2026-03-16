@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -88,8 +88,6 @@ class EcocentreOuvertBinarySensor(CoordinatorEntity, BinarySensorEntity):
 class EcocentreProchaineSensor(CoordinatorEntity, SensorEntity):
     """Sensor : date/heure de la prochaine ouverture de l'écocentre."""
 
-    _attr_device_class = SensorDeviceClass.TIMESTAMP
-
     def __init__(self, coordinator, entry, eco_key, eco_info):
         super().__init__(coordinator)
         self._eco_key = eco_key
@@ -105,13 +103,23 @@ class EcocentreProchaineSensor(CoordinatorEntity, SensorEntity):
         return self.coordinator.data.get(f"ecocentre_{self._eco_key}", {})
 
     @property
-    def native_value(self):
-        """Retourne un datetime avec timezone pour SensorDeviceClass.TIMESTAMP."""
-        from datetime import timezone
+    def native_value(self) -> str | None:
+        """Retourne la prochaine ouverture en texte lisible."""
         prochaine = self._data.get("prochaine_ouverture")
-        if prochaine:
-            return prochaine.replace(tzinfo=timezone.utc)
-        return None
+        if not prochaine:
+            return "Aucune ouverture prévue"
+        from datetime import date
+        today = date.today()
+        delta = (prochaine.date() - today).days
+        heure = prochaine.strftime("%H:%M")
+        if delta == 0:
+            return f"Aujourd'hui à {heure}"
+        if delta == 1:
+            return f"Demain à {heure}"
+        # Formatter la date en français
+        MOIS = ["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"]
+        mois = MOIS[prochaine.month - 1]
+        return f"{prochaine.day} {mois} à {heure}"
 
     @property
     def extra_state_attributes(self) -> dict:
