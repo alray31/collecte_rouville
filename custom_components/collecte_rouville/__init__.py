@@ -18,9 +18,10 @@ from .const import (
     CONF_LAT,
     CONF_LON,
     DOMAIN,
+    ECOCENTRES,
     SCAN_INTERVAL_HOURS,
 )
-from .schedule_parser import dates_futures, prochaine_date
+from .schedule_parser import dates_futures, parse_ecocentre_schedule, prochaine_date
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,9 +67,39 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         """Fetch data from Publidata API."""
         try:
             services = await self._fetch_services()
-            return self._parse_services(services)
+            result = self._parse_services(services)
+            # Ajouter les données des écocentres
+            for eco_key, eco_info in ECOCENTRES.items():
+                eco_data = await self._fetch_ecocentre(eco_info["service_id"])
+                result[f"ecocentre_{eco_key}"] = eco_data
+            return result
         except aiohttp.ClientError as err:
             raise UpdateFailed(f"Erreur API Publidata: {err}") from err
+
+    async def _fetch_ecocentre(self, service_id: int) -> dict:
+        """Fetch les données d'un écocentre via l'API Publidata."""
+        params = {
+            "types[]": "Platform::Facility",
+            "size": 1,
+            "services[]": service_id,
+            "geo_point[lat]": self.lat,
+            "geo_point[lon]": self.lon,
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.get(API_SEARCH_URL, params=params) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+
+        hits = data.get("hits", {}).get("hits", [])
+        if not hits:
+            return {"is_open": False, "prochaine_ouverture": None}
+
+        source = hits[0]["_source"]
+        opening_hours = source.get("opening_hours", "")
+        if not opening_hours:
+            return {"is_open": False, "prochaine_ouverture": None}
+
+        return parse_ecocentre_schedule(opening_hours)
 
     async def _fetch_services(self) -> list[dict]:
         """Appelle l'endpoint search de l'API Publidata."""
