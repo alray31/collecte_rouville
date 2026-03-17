@@ -1,4 +1,4 @@
-"""Sensors et binary sensors pour les écocentres MRC de Rouville v3.0."""
+"""Sensors et binary sensors pour les écocentres MRC de Rouville v1.0."""
 
 from __future__ import annotations
 
