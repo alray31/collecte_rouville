@@ -82,17 +82,19 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
     async def _fetch_ecocentre(self, service_id: int) -> dict:
         """Fetch les données d'un écocentre via l'API Publidata."""
-        params = {
-            "types[]": "Platform::Facility",
-            "size": 1,
-            "services[]": service_id,
-            "geo_point[lat]": self.lat,
-            "geo_point[lon]": self.lon,
-        }
+        # Construire l'URL manuellement car aiohttp encode les crochets [] en %5B%5D
+        url = (
+            f"{API_SEARCH_URL}"
+            f"?types[]=Platform::Facility"
+            f"&size=1"
+            f"&services[]={service_id}"
+            f"&geo_point[lat]={self.lat}"
+            f"&geo_point[lon]={self.lon}"
+        )
         async with aiohttp.ClientSession() as session:
-            async with session.get(API_SEARCH_URL, params=params) as resp:
+            async with session.get(url) as resp:
                 resp.raise_for_status()
-                _LOGGER.warning("Écocentre %s status=%s", service_id, resp.status)
+                _LOGGER.warning("Écocentre %s status=%s url=%s", service_id, resp.status, url)
                 data = await resp.json()
                 total = data.get("hits", {}).get("total", 0)
                 _LOGGER.warning("Écocentre %s hits=%s", service_id, total)
