@@ -91,8 +91,12 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
             f"&geo_point[lat]={self.lat}"
             f"&geo_point[lon]={self.lon}"
         )
+        headers = {
+            "Origin": "https://widget.publidata.ca",
+            "Referer": "https://widget.publidata.ca/",
+        }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
+            async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
                 _LOGGER.warning("Écocentre %s status=%s url=%s", service_id, resp.status, url)
                 data = await resp.json()
@@ -101,7 +105,7 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
         hits = data.get("hits", {}).get("hits", [])
         if not hits:
-            _LOGGER.warning("Écocentre %s - aucun résultat, URL params: %s", service_id, params)
+            _LOGGER.warning("Écocentre %s - aucun résultat", service_id)
             return {"is_open": False, "prochaine_ouverture": None}
 
         source = hits[0]["_source"]
