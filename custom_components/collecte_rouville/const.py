@@ -1,4 +1,4 @@
-"""Constants for Collecte MRC de Rouville - v3.0 (API REST)."""
+"""Constants for Collecte MRC de Rouville - v1.0 (API REST)."""
 
 DOMAIN = "collecte_rouville"
 
