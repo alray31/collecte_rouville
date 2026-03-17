@@ -16,7 +16,7 @@
 
 🗑️ Intégration HACS Home Assistant pour les collectes municipales de la MRC de Rouville — capteurs de dates et alertes automatiques.
 
-<img width="480" height="480" alt="image" src="https://github.com/user-attachments/assets/ca0dd53e-06a3-4fa9-ba99-162ad82b7471" />
+![Icon](https://github.com/user-attachments/assets/ca0dd53e-06a3-4fa9-ba99-162ad82b7471?raw=true)
 
 
 [![Ouvrir dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alray31&repository=collecte_rouville&category=integration)
