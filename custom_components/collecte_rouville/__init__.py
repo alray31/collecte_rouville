@@ -68,9 +68,13 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         try:
             services = await self._fetch_services()
             result = self._parse_services(services)
-            # Ajouter les données des écocentres
             for eco_key, eco_info in ECOCENTRES.items():
-                eco_data = await self._fetch_ecocentre(eco_info["service_id"])
+                _LOGGER.warning("Fetching écocentre %s (service_id=%s)", eco_key, eco_info["service_id"])
+                try:
+                    eco_data = await self._fetch_ecocentre(eco_info["service_id"])
+                except Exception as err:
+                    _LOGGER.warning("Erreur écocentre %s: %s", eco_key, err)
+                    eco_data = {"is_open": False, "prochaine_ouverture": None}
                 result[f"ecocentre_{eco_key}"] = eco_data
             return result
         except aiohttp.ClientError as err:
