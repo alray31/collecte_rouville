@@ -92,16 +92,20 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         async with aiohttp.ClientSession() as session:
             async with session.get(API_SEARCH_URL, params=params) as resp:
                 resp.raise_for_status()
+                _LOGGER.warning("Écocentre %s status=%s", service_id, resp.status)
                 data = await resp.json()
+                total = data.get("hits", {}).get("total", 0)
+                _LOGGER.warning("Écocentre %s hits=%s", service_id, total)
 
         hits = data.get("hits", {}).get("hits", [])
         if not hits:
+            _LOGGER.warning("Écocentre %s - aucun résultat, URL params: %s", service_id, params)
             return {"is_open": False, "prochaine_ouverture": None}
 
         source = hits[0]["_source"]
         opening_hours = source.get("opening_hours", "")
-        _LOGGER.warning("Écocentre %s - source keys: %s", service_id, list(source.keys()))
         _LOGGER.warning("Écocentre %s - opening_hours: '%s'", service_id, opening_hours)
+
         if not opening_hours:
             return {"is_open": False, "prochaine_ouverture": None}
 
@@ -138,7 +142,6 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         for collecte_key, collecte_info in COLLECTE_TYPES.items():
             garbage_types = collecte_info["garbage_types"]
 
-            # Chercher le meilleur service pour ce type
             service = self._find_best_service(services, garbage_types)
 
             if service is None:
@@ -168,7 +171,6 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
             next_date = prochaine_date(opening_hours, today)
             future_dates = dates_futures(opening_hours, today, max_dates=5)
-
             jours = (next_date - today).days if next_date else None
 
             result[collecte_key] = {
@@ -192,7 +194,6 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         """
         Trouve le service le plus pertinent pour un type de collecte.
         Priorité : depth=1 (secteur spécifique) > depth=0 (MRC général)
-        Et seulement les services avec des schedules (opening_hours non vide).
         """
         candidates = []
 
@@ -200,11 +201,9 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
             metas = service.get("metas", {})
             svc_garbage_types = metas.get("garbage_types", [])
 
-            # Vérifie si ce service correspond au type recherché
             if not any(gt in svc_garbage_types for gt in garbage_types):
                 continue
 
-            # Ignorer les services sans horaires (parents généraux)
             opening_hours = service.get("opening_hours", "")
             if not opening_hours:
                 continue
@@ -214,11 +213,8 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         if not candidates:
             return None
 
-        # Préférer depth=1 (service spécifique à la ville/secteur)
         specific = [s for s in candidates if s.get("depth", 0) >= 1]
         if specific:
-            # Prendre celui avec le plus de schedules (le plus précis)
             return max(specific, key=lambda s: len(s.get("opening_hours", "")))
 
-        # Sinon prendre le premier service général
         return candidates[0]
