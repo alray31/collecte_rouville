@@ -93,6 +93,9 @@ Pour les collectes **Volumineux** et **Branches** qui nécessitent une inscripti
 
 > Les écocentres sont communs à toute la MRC — ils apparaissent pour toutes les villes configurées.
 
+<img width="304" height="1017" alt="image" src="https://github.com/user-attachments/assets/24add360-c818-4c16-91cf-2b5aa1ef0c46" />
+
+
 ---
 
 ## Exemple d'automatisation
