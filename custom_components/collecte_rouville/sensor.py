@@ -1,4 +1,4 @@
-"""Sensors pour Collecte MRC de Rouville v3.0."""
+"""Sensors pour Collecte MRC de Rouville v1.0."""
 
 from __future__ import annotations
 
