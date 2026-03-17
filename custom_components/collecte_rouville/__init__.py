@@ -1,4 +1,4 @@
-"""Collecte MRC de Rouville - v3.0 (API REST Publidata)."""
+"""Collecte MRC de Rouville - v1.0 (API REST Publidata)."""
 
 from __future__ import annotations
 
@@ -69,11 +69,10 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
             services = await self._fetch_services()
             result = self._parse_services(services)
             for eco_key, eco_info in ECOCENTRES.items():
-                _LOGGER.warning("Fetching écocentre %s (service_id=%s)", eco_key, eco_info["service_id"])
                 try:
                     eco_data = await self._fetch_ecocentre(eco_info["service_id"])
                 except Exception as err:
-                    _LOGGER.warning("Erreur écocentre %s: %s", eco_key, err)
+                    _LOGGER.error("Erreur écocentre %s: %s", eco_key, err)
                     eco_data = {"is_open": False, "prochaine_ouverture": None}
                 result[f"ecocentre_{eco_key}"] = eco_data
             return result
@@ -82,7 +81,6 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
     async def _fetch_ecocentre(self, service_id: int) -> dict:
         """Fetch les données d'un écocentre via l'API Publidata."""
-        # Sans coordonnées GPS — les écocentres sont communs à toute la MRC
         url = (
             f"{API_SEARCH_URL}"
             f"?types[]=Platform::Facility"
@@ -96,19 +94,16 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as resp:
                 resp.raise_for_status()
-                _LOGGER.warning("Écocentre %s status=%s url=%s", service_id, resp.status, url)
                 data = await resp.json()
-                total = data.get("hits", {}).get("total", 0)
-                _LOGGER.warning("Écocentre %s hits=%s", service_id, total)
 
         hits = data.get("hits", {}).get("hits", [])
         if not hits:
-            _LOGGER.warning("Écocentre %s - aucun résultat", service_id)
+            _LOGGER.debug("Écocentre %s - aucun résultat", service_id)
             return {"is_open": False, "prochaine_ouverture": None}
 
         source = hits[0]["_source"]
         opening_hours = source.get("opening_hours", "")
-        _LOGGER.warning("Écocentre %s - opening_hours: '%s'", service_id, opening_hours)
+        _LOGGER.debug("Écocentre %s - opening_hours: '%s'", service_id, opening_hours)
 
         if not opening_hours:
             return {"is_open": False, "prochaine_ouverture": None}
@@ -145,7 +140,6 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
         for collecte_key, collecte_info in COLLECTE_TYPES.items():
             garbage_types = collecte_info["garbage_types"]
-
             service = self._find_best_service(services, garbage_types)
 
             if service is None:
@@ -161,10 +155,7 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
             opening_hours = service.get("opening_hours", "")
 
             if not opening_hours:
-                _LOGGER.debug(
-                    "Pas d'horaires pour %s (service: %s)",
-                    collecte_key, service.get("name")
-                )
+                _LOGGER.debug("Pas d'horaires pour %s (service: %s)", collecte_key, service.get("name"))
                 result[collecte_key] = {
                     "prochaine_date": None,
                     "jours_restants": None,
