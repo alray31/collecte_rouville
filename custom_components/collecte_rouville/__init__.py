@@ -82,14 +82,12 @@ class CollecteRouvilleCoordinator(DataUpdateCoordinator):
 
     async def _fetch_ecocentre(self, service_id: int) -> dict:
         """Fetch les données d'un écocentre via l'API Publidata."""
-        # Construire l'URL manuellement car aiohttp encode les crochets [] en %5B%5D
+        # Sans coordonnées GPS — les écocentres sont communs à toute la MRC
         url = (
             f"{API_SEARCH_URL}"
             f"?types[]=Platform::Facility"
             f"&size=1"
             f"&services[]={service_id}"
-            f"&geo_point[lat]={self.lat}"
-            f"&geo_point[lon]={self.lon}"
         )
         headers = {
             "Origin": "https://widget.publidata.ca",
